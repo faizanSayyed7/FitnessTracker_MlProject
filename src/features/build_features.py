@@ -103,12 +103,48 @@ subset[["pca_1", "pca_2", "pca_3"]].plot()
 # Sum of squares attributes
 # --------------------------------------------------------------
 
+df_squred = df_pca.copy()
 
+acc_r = df_squred["acc_x"] ** 2 + df_squred["acc_y"] ** 2 + df_squred["acc_z"] ** 2
+gyr_r = df_squred["gyr_x"] ** 2 + df_squred["gyr_y"] ** 2 + df_squred["gyr_z"] ** 2
+
+df_squred["acc_r"] = np.sqrt(acc_r)
+df_squred["gyr_r"] = np.sqrt(gyr_r)
+
+subset = df_squred[df_squred["set"] == 17]
+
+subset[["acc_r", "gyr_r"]].plot(subplots=True)
 
 # --------------------------------------------------------------
 # Temporal abstraction
 # --------------------------------------------------------------
 
+df_temporal = df_squred.copy()
+NumAbs = NumericalAbstraction()
+
+predictor_columns = predictor_columns + ["acc_r", "gyr_r"]
+
+ws = int(1000 / 200)
+
+for col in predictor_columns:
+    df_temporal = NumAbs.abstract_numerical(df_temporal, [col], ws, "mean")
+    df_temporal = NumAbs.abstract_numerical(df_temporal, [col], ws, "std")
+
+df_temporal_list = []
+
+for s in df_temporal["set"].unique():
+    subset = df_temporal[df_temporal["set"] == s].copy()
+    for col in predictor_columns:
+        subset = NumAbs.abstract_numerical(subset, [col], ws, "mean")
+        subset = NumAbs.abstract_numerical(subset, [col], ws, "std")
+    df_temporal_list.append(subset)
+
+df_temporal = pd.concat(df_temporal_list)
+
+df_temporal.columns
+
+subset[["acc_y", 'acc_y_temp_mean_ws_5', 'acc_y_temp_std_ws_5']].plot()
+subset[["gyr_y", 'gyr_y_temp_mean_ws_5', 'gyr_y_temp_std_ws_5']].plot()
 
 # --------------------------------------------------------------
 # Frequency features
